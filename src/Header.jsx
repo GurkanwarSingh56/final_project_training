@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import './index.css'
 
-function Header() {
+function Header({ currentPage, setCurrentPage }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const handleNavClick = (page) => {
+    setCurrentPage(page)
+    setIsMenuOpen(false) // Close mobile menu when clicking
+  }
 
   return (
     <header className="bg-white shadow-lg">
@@ -15,18 +20,46 @@ function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <button 
+              onClick={() => handleNavClick('home')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentPage === 'home' 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
               Home
-            </a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavClick('booking')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentPage === 'booking' 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
               Your booking
-            </a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavClick('services')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentPage === 'services' 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
               Services
-            </a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavClick('contact')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentPage === 'contact' 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
               Contact
-            </a>
+            </button>
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
              Log In
             </button>
@@ -52,20 +85,48 @@ function Header() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <a href="#" className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium">
+              <button 
+                onClick={() => handleNavClick('home')}
+                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                  currentPage === 'home' 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
                 Home
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium">
-                About
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium">
+              </button>
+              <button 
+                onClick={() => handleNavClick('booking')}
+                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                  currentPage === 'booking' 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Your booking
+              </button>
+              <button 
+                onClick={() => handleNavClick('services')}
+                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                  currentPage === 'services' 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
                 Services
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium">
+              </button>
+              <button 
+                onClick={() => handleNavClick('contact')}
+                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                  currentPage === 'contact' 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
                 Contact
-              </a>
+              </button>
               <button className="w-full text-left bg-blue-600 hover:bg-blue-700 text-white block px-3 py-2 rounded-md text-base font-medium">
-                Get Started
+                Log In
               </button>
             </div>
           </div>
