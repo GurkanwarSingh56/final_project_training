@@ -1,10 +1,149 @@
 import { useState } from 'react'
 import './index.css'
 import bookingbg from './assets/bookingbg.png'
-import { useFlightSearch } from './flight.jsx'
-import axios from 'axios' // Import axios for potential future use
+import axios from 'axios' // Import axios for API calls
 
-function Booking() {
+// Flight search functionality that can be imported by other components
+export const useFlightSearch = () => {
+  const [flights, setFlights] = useState([])
+  const [returnFlights, setReturnFlights] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+
+  const searchFlights = async (searchParams) => {
+    const { tripType, departure, destination, departureDate, returnDate, passengers, classType } = searchParams
+
+    if (!departure || !destination || !departureDate) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    if (tripType === 'round-trip' && !returnDate) {
+      alert('Please select return date for round trip')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      console.log('Searching flights...', searchParams)
+      
+      // Replace with the actual URL of your backend API endpoint
+      const YOUR_BACKEND_API_URL = 'http://localhost:3001/api/search-flights'
+
+      const response = await axios.post(YOUR_BACKEND_API_URL, {
+        origin: departure,
+        destination: destination,
+        earliestDepartureDate: departureDate,
+        latestDepartureDate: departureDate, // Assuming exact date search for simplicity
+        earliestReturnDate: tripType === 'round-trip' ? returnDate : undefined,
+        latestReturnDate: tripType === 'round-trip' ? returnDate : undefined,
+        numAdultPassengers: parseInt(passengers)
+      })
+
+      let outboundFlights = []
+      let returnFlights = []
+
+      // Assuming your backend sends back flight data in response.data.flights
+      if (response.data && response.data.flights) {
+        const apiFlights = response.data.flights
+        
+        // Transform API data to match our component structure
+        outboundFlights = apiFlights.map((flight, index) => ({
+          id: index + 1,
+          airline: Array.isArray(flight.airline) ? flight.airline.join(', ') : flight.airline,
+          departure: flight.origin || departure,
+          destination: flight.destination || destination,
+          departureTime: flight.departure_time,
+          arrivalTime: flight.arrival_time,
+          price: flight.price,
+          duration: flight.duration,
+          class: classType,
+          date: departureDate,
+          type: 'outbound',
+          flightNumber: Array.isArray(flight.flight_number) ? flight.flight_number.join(', ') : flight.flight_number,
+          flightUrl: flight.flight_url
+        }))
+
+        // For round trips, you might need to make another API call or the backend might return return flights
+        // This depends on how your API is structured
+        if (tripType === 'round-trip') {
+          // Option 1: If your API returns both outbound and return in one call
+          // You might need to filter or separate them based on your API response structure
+          
+          // Option 2: Make a separate API call for return flights
+          try {
+            const returnResponse = await axios.post(YOUR_BACKEND_API_URL, {
+              origin: destination,
+              destination: departure,
+              earliestDepartureDate: returnDate,
+              latestDepartureDate: returnDate,
+              numAdultPassengers: parseInt(passengers)
+            })
+
+            if (returnResponse.data && returnResponse.data.flights) {
+              returnFlights = returnResponse.data.flights.map((flight, index) => ({
+                id: index + 100, // Different ID range for return flights
+                airline: Array.isArray(flight.airline) ? flight.airline.join(', ') : flight.airline,
+                departure: flight.origin || destination,
+                destination: flight.destination || departure,
+                departureTime: flight.departure_time,
+                arrivalTime: flight.arrival_time,
+                price: flight.price,
+                duration: flight.duration,
+                class: classType,
+                date: returnDate,
+                type: 'return',
+                flightNumber: Array.isArray(flight.flight_number) ? flight.flight_number.join(', ') : flight.flight_number,
+                flightUrl: flight.flight_url
+              }))
+            }
+          } catch (returnError) {
+            console.error('Error fetching return flights:', returnError)
+            // Continue with outbound flights only
+          }
+        }
+      } else {
+        alert('No flights found for your search criteria.')
+        return { outbound: [], return: [] }
+      }
+      
+      setFlights(outboundFlights)
+      setReturnFlights(returnFlights)
+      setShowModal(true) // Open modal when results are ready
+      return { outbound: outboundFlights, return: returnFlights }
+    } catch (error) {
+      console.error('Error searching flights:', error)
+      
+      let errorMessage = 'Failed to fetch flights. Please try again.'
+      
+      if (error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error: Unable to connect to flight search API. Please check if the API server is running.'
+      } else if (error.response) {
+        errorMessage = `API Error: ${error.response.status} - ${error.response.data?.message || 'Server error'}`
+      } else if (error.request) {
+        errorMessage = 'No response from flight search API. Please check your connection.'
+      }
+      
+      alert(errorMessage)
+      return { outbound: [], return: [] }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { 
+    flights, 
+    returnFlights, 
+    isLoading, 
+    searchFlights, 
+    setFlights, 
+    setReturnFlights,
+    showModal,
+    setShowModal
+  }
+}
+
+function Flight() {
   const [activeTab, setActiveTab] = useState('flight')
   const [tripType, setTripType] = useState('round-trip')
   const [departure, setDeparture] = useState('')
@@ -13,55 +152,20 @@ function Booking() {
   const [returnDate, setReturnDate] = useState('')
   const [passengers, setPassengers] = useState(1)
   const [classType, setClassType] = useState('economy')
-  
-  // Railway specific states
-  const [railwayFrom, setRailwayFrom] = useState('')
-  const [railwayTo, setRailwayTo] = useState('')
-  const [railwayDate, setRailwayDate] = useState('')
-  const [railwayClass, setRailwayClass] = useState('sleeper')
-  
-  // Hotel specific states
-  const [hotelCity, setHotelCity] = useState('')
-  const [checkInDate, setCheckInDate] = useState('')
-  const [checkOutDate, setCheckOutDate] = useState('')
-  const [guests, setGuests] = useState(1)
-  const [rooms, setRooms] = useState(1)
-  
-  // Insurance specific states
-  const [insuranceType, setInsuranceType] = useState('travel')
-  const [travelDestination, setTravelDestination] = useState('')
-  const [travelStartDate, setTravelStartDate] = useState('')
-  const [travelEndDate, setTravelEndDate] = useState('')
-  const [coverageAmount, setCoverageAmount] = useState('basic')
 
-  // Use flight search functionality from flight.jsx
+  // Use the flight search hook
   const { flights, returnFlights, isLoading, searchFlights, showModal, setShowModal } = useFlightSearch()
 
   const handleSearch = async () => {
-    if (activeTab === 'flight') {
-      // Use the flight search function from flight.jsx
-      await searchFlights({
-        tripType,
-        departure,
-        destination,
-        departureDate,
-        returnDate,
-        passengers,
-        classType
-      })
-    } else {
-      // Handle other tabs (railways, hotels, insurance)
-      console.log(`Searching ${activeTab}...`, {
-        activeTab,
-        tripType,
-        departure,
-        destination,
-        departureDate,
-        returnDate,
-        passengers,
-        classType
-      })
-    }
+    await searchFlights({
+      tripType,
+      departure,
+      destination,
+      departureDate,
+      returnDate,
+      passengers,
+      classType
+    })
   }
 
   const tabsData = [
@@ -73,38 +177,11 @@ function Booking() {
           <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
         </svg>
       )
-    },
-    {
-      id: 'railways',
-      label: 'RAILWAYS',
-      icon: (
-        <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2H18v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.59-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-7H6V6h12v4z"/>
-        </svg>
-      )
-    },
-    {
-      id: 'hotels',
-      label: 'HOTELS',
-      icon: (
-        <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V6H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
-        </svg>
-      )
-    },
-    {
-      id: 'insurance',
-      label: 'TRAVEL INSURANCE',
-      icon: (
-        <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5H16.3V16H7.7V11.5H9.2V10C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,10V11.5H13.5V10C13.5,8.7 12.8,8.2 12,8.2Z"/>
-        </svg>
-      )
     }
   ]
 
   return (
-<div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 relative">      {/* Background Image Overlay */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 relative">
       <div 
         className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat"
         style={{
@@ -112,21 +189,19 @@ function Booking() {
         }}
       ></div>
 
-      {/* Booking Section */}
       <div className="relative py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Book Your Journey
+              Book Your Flight
             </h1>
             <p className="text-xl text-white max-w-2xl mx-auto">
-              Discover the best deals on flights, trains, hotels and insurance worldwide. Book now and save big on your next adventure.
+              Discover the best deals on flights worldwide. Book now and save big on your next adventure.
             </p>
           </div>
 
-          {/* Tab Navigation */}
           <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-6xl mx-auto mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4">
+            <div className="grid grid-cols-1">
               {tabsData.map((tab) => (
                 <button
                   key={tab.id}
@@ -146,11 +221,10 @@ function Booking() {
             </div>
           </div>
 
-          {/* Dynamic Content Based on Active Tab */}
           {activeTab === 'flight' && (
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Flight</h2>
-            {/* Trip Type Selection */}
+            
             <div className="flex flex-wrap gap-4 mb-6">
               <label className="flex items-center">
                 <input
@@ -172,11 +246,19 @@ function Booking() {
                 />
                 <span className="text-gray-700">One Way</span>
               </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="multi-city"
+                  checked={tripType === 'multi-city'}
+                  onChange={(e) => setTripType(e.target.value)}
+                  className="mr-2 text-blue-600"
+                />
+                <span className="text-gray-700">Multi City</span>
+              </label>
             </div>
 
-            {/* Search Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {/* From */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
                 <input
@@ -188,7 +270,6 @@ function Booking() {
                 />
               </div>
 
-              {/* To */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
                 <input
@@ -200,7 +281,6 @@ function Booking() {
                 />
               </div>
 
-              {/* Departure Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Departure</label>
                 <input
@@ -211,7 +291,6 @@ function Booking() {
                 />
               </div>
 
-              {/* Return Date */}
               {tripType === 'round-trip' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Return</label>
@@ -225,7 +304,6 @@ function Booking() {
               )}
             </div>
 
-            {/* Passengers and Class */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Passengers</label>
@@ -384,7 +462,7 @@ function Booking() {
                                 <div className="text-2xl font-bold text-blue-600">{flight.price}</div>
                                 <div className="text-gray-500 text-sm capitalize">{flight.class}</div>
                                 <div className="mt-2 space-y-2">
-                                  <button className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                  <button className="mt-2 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
                                     Select
                                   </button>
                                   {flight.flightUrl && flight.flightUrl !== '#' && (
@@ -409,242 +487,10 @@ function Booking() {
               </div>
             </div>
           )}
-
-          {/* Railways Section */}
-          {activeTab === 'railways' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Train</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">From Station</label>
-                <input
-                  type="text"
-                  placeholder="Departure Station"
-                  value={railwayFrom}
-                  onChange={(e) => setRailwayFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">To Station</label>
-                <input
-                  type="text"
-                  placeholder="Destination Station"
-                  value={railwayTo}
-                  onChange={(e) => setRailwayTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Journey Date</label>
-                <input
-                  type="date"
-                  value={railwayDate}
-                  onChange={(e) => setRailwayDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
-                <select
-                  value={railwayClass}
-                  onChange={(e) => setRailwayClass(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="sleeper">Sleeper (SL)</option>
-                  <option value="3ac">3rd AC (3A)</option>
-                  <option value="2ac">2nd AC (2A)</option>
-                  <option value="1ac">1st AC (1A)</option>
-                  <option value="cc">Chair Car (CC)</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <button
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-md transition-colors duration-200"
-              >
-                Search Trains
-              </button>
-            </div>
-          </div>
-          )}
-
-          {/* Hotels Section */}
-          {activeTab === 'hotels' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Hotel</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City/Destination</label>
-                <input
-                  type="text"
-                  placeholder="Enter city name"
-                  value={hotelCity}
-                  onChange={(e) => setHotelCity(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
-                <input
-                  type="date"
-                  value={checkInDate}
-                  onChange={(e) => setCheckInDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
-                <input
-                  type="date"
-                  value={checkOutDate}
-                  onChange={(e) => setCheckOutDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rooms</label>
-                <select
-                  value={rooms}
-                  onChange={(e) => setRooms(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <option key={num} value={num}>{num} Room{num > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Guests</label>
-                <select
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                    <option key={num} value={num}>{num} Guest{num > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <button
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-md transition-colors duration-200"
-              >
-                Search Hotels
-              </button>
-            </div>
-          </div>
-          )}
-
-          {/* Travel Insurance Section */}
-          {activeTab === 'insurance' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Get Travel Insurance</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Insurance Type</label>
-                <select
-                  value={insuranceType}
-                  onChange={(e) => setInsuranceType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="travel">Travel Insurance</option>
-                  <option value="medical">Medical Insurance</option>
-                  <option value="adventure">Adventure Sports</option>
-                  <option value="business">Business Travel</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-                <input
-                  type="text"
-                  placeholder="Travel destination"
-                  value={travelDestination}
-                  onChange={(e) => setTravelDestination(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  value={travelStartDate}
-                  onChange={(e) => setTravelStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                <input
-                  type="date"
-                  value={travelEndDate}
-                  onChange={(e) => setTravelEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Coverage Amount</label>
-                <select
-                  value={coverageAmount}
-                  onChange={(e) => setCoverageAmount(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="basic">Basic - $50,000</option>
-                  <option value="standard">Standard - $100,000</option>
-                  <option value="premium">Premium - $250,000</option>
-                  <option value="platinum">Platinum - $500,000</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Travelers</label>
-                <select
-                  value={passengers}
-                  onChange={(e) => setPassengers(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {[1, 2, 3, 4, 5, 6].map(num => (
-                    <option key={num} value={num}>{num} Traveler{num > 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <button
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-md transition-colors duration-200"
-              >
-                Get Insurance Quote
-              </button>
-            </div>
-          </div>
-          )}
         </div>
       </div>
     </div>
   )
 }
 
-export default Booking
+export default Flight
