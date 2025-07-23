@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Test</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        function TestModal({ isOpen, onClose }) {
+            if (!isOpen) return null;
+            
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <h2 className="text-xl font-bold mb-4">Test Modal</h2>
+                        <p className="mb-4">This modal is working correctly!</p>
+                        <button 
+                            onClick={onClose}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        function App() {
+            const [showModal, setShowModal] = useState(false);
+            
+            return (
+                <div className="p-8">
+                    <h1 className="text-2xl font-bold mb-4">Modal Functionality Test</h1>
+                    <button 
+                        onClick={() => setShowModal(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    >
+                        Open Test Modal
+                    </button>
+                    
+                    <TestModal 
+                        isOpen={showModal} 
+                        onClose={() => setShowModal(false)} 
+                    />
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

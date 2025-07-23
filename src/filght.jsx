@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import './index.css'
-import BookingModal from './components/BookingModal'
 
-function Booking() {
+function Flight() {
   const [activeTab, setActiveTab] = useState('flight')
   const [tripType, setTripType] = useState('round-trip')
   const [departure, setDeparture] = useState('')
@@ -32,73 +31,17 @@ function Booking() {
   const [travelEndDate, setTravelEndDate] = useState('')
   const [coverageAmount, setCoverageAmount] = useState('basic')
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalSearchType, setModalSearchType] = useState('')
-  const [modalSearchData, setModalSearchData] = useState({})
-
   const handleSearch = () => {
-    console.log(`Searching ${activeTab}...`)
-    
-    if (activeTab === 'flight') {
-      const searchData = {
-        activeTab,
-        tripType,
-        departure,
-        destination,
-        departureDate,
-        returnDate,
-        passengers,
-        classType
-      }
-      console.log('Flight Search Data:', searchData)
-      setModalSearchType('flight')
-      setModalSearchData(searchData)
-      setIsModalOpen(true)
-    } 
-    else if (activeTab === 'railways') {
-      const searchData = {
-        activeTab,
-        railwayFrom,
-        railwayTo,
-        railwayDate,
-        railwayClass,
-        passengers
-      }
-      console.log('Railway Search Data:', searchData)
-      setModalSearchType('railways')
-      setModalSearchData(searchData)
-      setIsModalOpen(true)
-    }
-    else if (activeTab === 'hotels') {
-      const searchData = {
-        activeTab,
-        hotelCity,
-        checkInDate,
-        checkOutDate,
-        guests,
-        rooms
-      }
-      console.log('Hotel Search Data:', searchData)
-      setModalSearchType('hotels')
-      setModalSearchData(searchData)
-      setIsModalOpen(true)
-    }
-    else if (activeTab === 'insurance') {
-      const searchData = {
-        activeTab,
-        insuranceType,
-        travelDestination,
-        travelStartDate,
-        travelEndDate,
-        coverageAmount,
-        passengers
-      }
-      console.log('Insurance Search Data:', searchData)
-      setModalSearchType('insurance')
-      setModalSearchData(searchData)
-      setIsModalOpen(true)
-    }
+    console.log(`Searching ${activeTab}...`, {
+      activeTab,
+      tripType,
+      departure,
+      destination,
+      departureDate,
+      returnDate,
+      passengers,
+      classType
+    })
   }
 
   const tabsData = [
@@ -141,19 +84,16 @@ function Booking() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative">
-      {/* Background Image Overlay */}
-      <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-blue-200 to-purple-200"></div>
-
-      {/* Booking Section */}
+    <div className="min-h-screen">
+      {/* Hero Section */}
       <div className="relative py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Book Your Journey
+              Find Your Perfect Flight
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover the best deals on flights, trains, hotels and insurance worldwide. Book now and save big on your next adventure.
+              Discover the best deals on flights worldwide. Book now and save big on your next adventure.
             </p>
           </div>
 
@@ -164,11 +104,11 @@ function Booking() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={
+                  className={`p-6 text-center transition-all duration-300 ${
                     activeTab === tab.id
-                      ? 'p-6 text-center transition-all duration-300 bg-blue-600 text-white'
-                      : 'p-6 text-center transition-all duration-300 bg-white text-gray-600 hover:bg-gray-50'
-                  }
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
                   <div className="flex flex-col items-center">
                     {tab.icon}
@@ -181,9 +121,8 @@ function Booking() {
 
           {/* Dynamic Content Based on Active Tab */}
           {activeTab === 'flight' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Flight</h2>
-            
             {/* Trip Type Selection */}
             <div className="flex flex-wrap gap-4 mb-6">
               <label className="flex items-center">
@@ -205,6 +144,16 @@ function Booking() {
                   className="mr-2 text-blue-600"
                 />
                 <span className="text-gray-700">One Way</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="multi-city"
+                  checked={tripType === 'multi-city'}
+                  onChange={(e) => setTripType(e.target.value)}
+                  className="mr-2 text-blue-600"
+                />
+                <span className="text-gray-700">Multi City</span>
               </label>
             </div>
 
@@ -302,7 +251,7 @@ function Booking() {
 
           {/* Railways Section */}
           {activeTab === 'railways' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Train</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -367,7 +316,7 @@ function Booking() {
 
           {/* Hotels Section */}
           {activeTab === 'hotels' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Hotel</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -442,7 +391,7 @@ function Booking() {
 
           {/* Travel Insurance Section */}
           {activeTab === 'insurance' && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Get Travel Insurance</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -534,15 +483,90 @@ function Booking() {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      <BookingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        searchType={modalSearchType}
-        searchData={modalSearchData}
-      />
+      {/* Features Section */}
+      <div className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Us?</h2>
+            <p className="text-lg text-gray-600">Book with confidence and enjoy these amazing benefits</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Best Price Guarantee</h3>
+              <p className="text-gray-600">We'll match any lower price you find elsewhere</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">24/7 Support</h3>
+              <p className="text-gray-600">Round-the-clock customer support for peace of mind</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Instant Booking</h3>
+              <p className="text-gray-600">Book flights instantly with immediate confirmation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Popular Destinations */}
+      <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Popular Destinations</h2>
+            <p className="text-lg text-gray-600">Discover amazing places around the world</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { city: 'New York', country: 'USA', price: '$299' },
+              { city: 'Paris', country: 'France', price: '$450' },
+              { city: 'Tokyo', country: 'Japan', price: '$650' },
+              { city: 'London', country: 'UK', price: '$380' }
+            ].map((destination, index) => (
+              <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="h-48 bg-gradient-to-r from-blue-400 to-purple-500"></div>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900">{destination.city}</h3>
+                  <p className="text-gray-600 mb-2">{destination.country}</p>
+                  <p className="text-blue-600 font-bold">From {destination.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Call to Action */}
+      <div className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Take Off?</h2>
+          <p className="text-lg text-gray-600 mb-8">
+            Join millions of travelers who trust us with their journey. Start planning your next adventure today.
+          </p>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors duration-200">
+            Start Booking Now
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
 
-export default Booking
+export default Flight
