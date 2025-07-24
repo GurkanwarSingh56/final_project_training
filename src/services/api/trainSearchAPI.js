@@ -94,12 +94,17 @@ const popularRoutes = [
 export const generateMockTrains = (from, to, date) => {
   console.log('Generating mock trains for:', { from, to, date });
   
+  // Provide defaults if parameters are missing
+  const searchFrom = from || "New Delhi";
+  const searchTo = to || "Mumbai Central";
+  const searchDate = date || new Date().toISOString().split('T')[0];
+  
   const trains = [];
   
   // Find route info or use defaults
   const routeInfo = popularRoutes.find(route => 
-    route.from.toLowerCase().includes(from?.toLowerCase()) && 
-    route.to.toLowerCase().includes(to?.toLowerCase())
+    route.from.toLowerCase().includes(searchFrom?.toLowerCase()) && 
+    route.to.toLowerCase().includes(searchTo?.toLowerCase())
   );
   
   const baseDistance = routeInfo ? routeInfo.distance : 800 + Math.floor(Math.random() * 1200);
@@ -172,8 +177,8 @@ export const generateMockTrains = (from, to, date) => {
       id: `train-${i + 1}`,
       train_name: trainName,
       train_number: trainNumber,
-      from: from || "New Delhi",
-      to: to || "Mumbai Central",
+      from: searchFrom,
+      to: searchTo,
       departure_time: departureTime,
       arrival_time: arrivalTime,
       duration: duration,
@@ -183,9 +188,9 @@ export const generateMockTrains = (from, to, date) => {
       type: type,
       pantry: Math.random() > 0.3,
       wifi: Math.random() > 0.5,
-      date: date || new Date().toISOString().split('T')[0],
-      source_code: stationCodes[from] || "NDLS",
-      destination_code: stationCodes[to] || "BCT",
+      date: searchDate,
+      source_code: stationCodes[searchFrom] || "NDLS",
+      destination_code: stationCodes[searchTo] || "BCT",
       quota: "GN", // General quota
       travel_class: Object.keys(classes)[0] // Default class
     });
@@ -196,28 +201,63 @@ export const generateMockTrains = (from, to, date) => {
 
 // ===== MAIN API FUNCTIONS =====
 
-// Search trains with mock data
+// Main search function
 export const searchTrains = async (from, to, date) => {
   try {
-    console.log('Searching trains with mock data:', { from, to, date });
+    console.log('Searching trains with params:', { from, to, date });
+    
+    // Validate required parameters
+    if (!from || !to) {
+      console.error('Missing required parameters: from or to');
+      return {
+        success: false,
+        error: 'Source and destination stations are required',
+        data: [],
+        message: 'Please provide both departure and arrival stations.'
+      };
+    }
     
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Generate mock train data based on search parameters
+    // Generate mock train data
     const mockTrains = generateMockTrains(from, to, date);
+    
+    // Transform data to match BookingModal expectations
+    const transformedTrains = mockTrains.map(train => ({
+      id: train.id,
+      trainName: train.train_name,
+      trainNumber: train.train_number,
+      from: train.from,
+      to: train.to,
+      departure: train.departure_time,
+      arrival: train.arrival_time,
+      duration: train.duration,
+      distance: train.distance,
+      trainType: train.type,
+      runsOn: train.days,
+      pantry: train.pantry,
+      wifi: train.wifi,
+      classes: Object.entries(train.classes).map(([className, classData]) => ({
+        type: className,
+        price: classData.price,
+        availability: classData.available > 0 ? 'Available' : 'Waiting List',
+        seats: `${classData.available} available`,
+        waitingList: classData.waitingList
+      }))
+    }));
 
     return {
       success: true,
-      data: mockTrains,
-      message: 'Mock trains loaded successfully',
-      total: mockTrains.length,
+      data: transformedTrains,
+      message: 'Mock train data loaded successfully',
+      total: transformedTrains.length,
       apiStatus: 'mock',
-      provider: 'Mock Railway Data Provider',
+      provider: 'Mock Train API Provider',
       searchParams: { from, to, date }
     };
   } catch (error) {
-    console.error('Mock Railway API Error:', error);
+    console.error('Mock Train API Error:', error);
     return {
       success: false,
       error: error.message,

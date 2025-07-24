@@ -20,6 +20,7 @@ function PassengerDetailsModal({
   })
 
   useEffect(() => {
+    console.log('PassengerDetailsModal props changed:', { isOpen, bookingType, bookingData, selectedItem })
     if (isOpen && bookingData) {
       console.log('PassengerDetailsModal opening with:', {
         bookingType,

@@ -21,12 +21,27 @@ const mockInsuranceData = [
       "24/7 Customer Support",
       "Emergency Evacuation"
     ],
+    benefits: [
+      "Medical Emergency Coverage",
+      "Trip Cancellation",
+      "Baggage Loss Protection",
+      "24/7 Customer Support",
+      "Emergency Evacuation"
+    ],
+    claims: "92% claim ratio",
+    exclusions: [
+      "Pre-existing medical conditions",
+      "Adventure sports without coverage",
+      "War and terrorism",
+      "Pregnancy-related expenses"
+    ],
     duration: "Up to 30 days",
     regions: ["Domestic", "Asia"],
     ageLimit: "18-70 years",
     rating: 4.2,
     claimRatio: "92%",
-    popular: false
+    popular: false,
+    travelers: 1
   },
   {
     id: 2,
@@ -47,12 +62,29 @@ const mockInsuranceData = [
       "Personal Liability",
       "Adventure Sports Coverage"
     ],
+    benefits: [
+      "Medical Emergency Coverage",
+      "Trip Cancellation & Interruption",
+      "Baggage & Personal Effects",
+      "Flight Delay Compensation",
+      "Emergency Evacuation",
+      "Personal Liability",
+      "Adventure Sports Coverage"
+    ],
+    claims: "95% claim ratio",
+    exclusions: [
+      "Pre-existing medical conditions (unless declared)",
+      "War and terrorism (basic coverage)",
+      "Mental health conditions",
+      "High-risk activities without coverage"
+    ],
     duration: "Up to 90 days",
     regions: ["Worldwide", "Including USA"],
     ageLimit: "18-75 years",
     rating: 4.5,
     claimRatio: "95%",
-    popular: true
+    popular: true,
+    travelers: 1
   },
   {
     id: 3,
@@ -75,12 +107,32 @@ const mockInsuranceData = [
       "Business Equipment",
       "Rental Car Coverage"
     ],
+    benefits: [
+      "Medical Emergency Coverage",
+      "Trip Cancellation & Interruption",
+      "Baggage & Personal Effects",
+      "Flight Delay Compensation",
+      "Emergency Evacuation",
+      "Personal Liability",
+      "Adventure Sports Coverage",
+      "Business Equipment",
+      "Rental Car Coverage"
+    ],
+    claims: "97% claim ratio",
+    exclusions: [
+      "Pre-existing medical conditions (unless declared)",
+      "Extreme sports without specific coverage",
+      "War and civil unrest",
+      "Intentional self-harm",
+      "Drug and alcohol-related incidents"
+    ],
     duration: "Up to 180 days",
     regions: ["Worldwide", "Including USA & Canada"],
     ageLimit: "18-80 years",
     rating: 4.7,
     claimRatio: "97%",
-    popular: false
+    popular: false,
+    travelers: 1
   }
 ];
 
@@ -175,6 +227,15 @@ export const generateMockInsurance = (searchParams) => {
       originalPrice: `₹${originalPremium.toLocaleString()}`,
       discount: `${discount}% off`,
       features: selectedFeatures,
+      benefits: selectedFeatures, // Added for modal compatibility
+      claims: `${claimRatio}% claim ratio`, // Added for modal compatibility
+      exclusions: [ // Added for modal compatibility
+        "Pre-existing medical conditions (unless declared)",
+        "Adventure sports without coverage",
+        "War and terrorism (basic plans)",
+        "Pregnancy-related expenses",
+        "Mental health conditions"
+      ],
       duration: tripType === 'long-term' ? "Up to 365 days" : "Up to 90 days",
       regions: destination?.toLowerCase().includes('domestic') ? ["Domestic"] : 
                destination?.toLowerCase().includes('usa') ? ["Worldwide", "Including USA"] :

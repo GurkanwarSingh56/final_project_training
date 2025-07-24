@@ -142,9 +142,24 @@ const airlines = [
 
 // Generate mock flights based on search parameters
 export const generateMockFlights = (searchParams) => {
-  const { from, to, departureDate, returnDate, passengers, tripType } = searchParams;
+  const { 
+    from, to, departure, destination, 
+    departureDate, returnDate, 
+    passengers, tripType 
+  } = searchParams;
   
-  console.log('Generating mock flights for:', { from, to, departureDate, returnDate, passengers, tripType });
+  // Handle both parameter formats
+  const normalizedFrom = from || departure;
+  const normalizedTo = to || destination;
+  
+  console.log('Generating mock flights for:', { 
+    from: normalizedFrom, 
+    to: normalizedTo, 
+    departureDate, 
+    returnDate, 
+    passengers, 
+    tripType 
+  });
   
   const outboundFlights = [];
   const returnFlights = [];
@@ -180,7 +195,8 @@ export const generateMockFlights = (searchParams) => {
     
     // Find route info or use defaults
     const routeInfo = additionalRoutes.find(route => 
-      route.from.toLowerCase() === from?.toLowerCase() && route.to.toLowerCase() === to?.toLowerCase()
+      route.from.toLowerCase() === normalizedFrom?.toLowerCase() && 
+      route.to.toLowerCase() === normalizedTo?.toLowerCase()
     );
     
     const basePrice = routeInfo ? routeInfo.basePrice : 3000 + Math.floor(Math.random() * 2000);
@@ -191,8 +207,8 @@ export const generateMockFlights = (searchParams) => {
       id: `outbound-${i + 1}`,
       airline,
       flight_number: flightNumber,
-      origin: from || "Delhi",
-      destination: to || "Mumbai",
+      origin: normalizedFrom || "Delhi",
+      destination: normalizedTo || "Mumbai",
       departure_time: departureTime,
       arrival_time: arrivalTime,
       duration: routeInfo ? routeInfo.duration : duration,
@@ -232,7 +248,8 @@ export const generateMockFlights = (searchParams) => {
       const routeInfo = additionalRoutes.find(route => 
         route.from.toLowerCase() === to?.toLowerCase() && route.to.toLowerCase() === from?.toLowerCase()
       ) || additionalRoutes.find(route => 
-        route.to.toLowerCase() === to?.toLowerCase() && route.from.toLowerCase() === from?.toLowerCase()
+        route.to.toLowerCase() === normalizedTo?.toLowerCase() && 
+        route.from.toLowerCase() === normalizedFrom?.toLowerCase()
       );
       
       const basePrice = routeInfo ? routeInfo.basePrice : 3000 + Math.floor(Math.random() * 2000);
@@ -245,8 +262,8 @@ export const generateMockFlights = (searchParams) => {
         id: `return-${i + 1}`,
         airline,
         flight_number: flightNumber,
-        origin: to || "Mumbai",
-        destination: from || "Delhi",
+        origin: normalizedTo || "Mumbai",
+        destination: normalizedFrom || "Delhi",
         departure_time: departureTime,
         arrival_time: arrivalTime,
         duration: routeInfo ? routeInfo.duration : duration,
@@ -293,12 +310,29 @@ export const searchFlights = async (searchParams) => {
   try {
     console.log('Searching flights with mock data:', searchParams);
     
-    // Validate search parameters
-    const { from, to, departureDate, returnDate, passengers, tripType } = searchParams;
+    // Validate and normalize search parameters
+    const { 
+      from, to, departure, destination, 
+      departureDate, returnDate, 
+      passengers, tripType 
+    } = searchParams;
     
-    if (!from || !to || !departureDate) {
-      throw new Error('Missing required search parameters: from, to, and departureDate are required');
+    // Handle both 'from/to' and 'departure/destination' parameter formats
+    const normalizedFrom = from || departure;
+    const normalizedTo = to || destination;
+    
+    if (!normalizedFrom || !normalizedTo || !departureDate) {
+      throw new Error('Missing required search parameters: origin, destination, and departure date are required');
     }
+    
+    // Normalize the search parameters for internal use
+    const normalizedParams = {
+      ...searchParams,
+      from: normalizedFrom,
+      to: normalizedTo,
+      departure: normalizedFrom,
+      destination: normalizedTo
+    };
     
     const isRoundTrip = tripType === 'round-trip' || tripType === 'roundtrip' || (returnDate && returnDate !== '');
     
@@ -309,8 +343,8 @@ export const searchFlights = async (searchParams) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Generate mock flight data based on search parameters
-    const mockResults = generateMockFlights(searchParams);
+    // Generate mock flight data based on normalized search parameters
+    const mockResults = generateMockFlights(normalizedParams);
     const allFlights = [...mockResults.outbound, ...mockResults.return];
 
     // Calculate total price for round trip combinations
